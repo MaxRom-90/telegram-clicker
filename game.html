@@ -39,14 +39,12 @@
     </div>
 
     <script>
-        // Получаем объект Telegram WebApp
         const tg = window.Telegram?.WebApp;
 
-        // Проверяем, доступен ли Telegram.WebApp
         if (tg) {
             console.log("Telegram.WebApp доступен.");
-            tg.ready(); // Говорим Telegram, что Web App готов
-            tg.expand(); // Раскрываем Web App на весь экран
+            tg.ready();
+            tg.expand();
         } else {
             console.error("Telegram.WebApp недоступен!");
             alert("Откройте игру через Telegram.");
@@ -55,14 +53,13 @@
         function sendResult() {
             if (tg) {
                 const message = "Привет, это тестовое сообщение!";
-                const data = JSON.stringify({ message: message }); // Формируем правильный JSON
+                const data = JSON.stringify({ message: message });
                 console.log("Отправка данных в бота:", data);
-                tg.sendData(data); // Отправляем данные
+                tg.sendData(data);
 
-                // Закрываем Web App через 1 секунду
                 setTimeout(() => {
                     tg.close();
-                }, 1000); // Задержка 1 секунда
+                }, 1000);
             } else {
                 console.error("Telegram.WebApp недоступен!");
                 alert("Откройте игру через Telegram.");

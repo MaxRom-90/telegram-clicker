@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кликер</title>
+    <style>
+        /* Стили остаются без изменений */
+    </style>
+</head>
+<body>
+    <div id="game">
+        <h1>Кликер</h1>
+        <p id="timer">Время: 10 сек</p>
+        <p id="counter">Кликов: 0</p>
+        <button onclick="clickButton()">Кликнуть!</button>
+    </div>
+
+    <script>
+        let clicks = 0;
+        let time = 10;
+        let timerId = null;
+
+        function startGame() {
+            clicks = 0;
+            time = 10;
+            if (timerId) clearInterval(timerId);
+            document.getElementById("counter").textContent = "Кликов: 0";
+            document.getElementById("timer").textContent = "Время: 10 сек";
+            timerId = setInterval(updateTimer, 1000);
+            console.log("Таймер запущен");
+        }
+
+        function updateTimer() {
+            time--;
+            console.log("Осталось времени:", time);
+            document.getElementById("timer").textContent = `Время: ${time} сек`;
+            if (time <= 0) {
+                clearInterval(timerId);
+                console.log("Время вышло. Кликов:", clicks);
+                sendResult();
+            }
+        }
+
+        function clickButton() {
+            clicks++;
+            document.getElementById("counter").textContent = `Кликов: ${clicks}`;
+        }
+
+        function sendResult() {
+            if (window.Telegram?.WebApp) {
+                console.log("Отправка данных в бота:", { clicks: clicks });
+                Telegram.WebApp.sendData(JSON.stringify({ clicks: clicks }));
+                Telegram.WebApp.close();
+            } else {
+                console.log("Telegram.WebApp недоступен. Результат:", clicks);
+                alert(`Игра окончена! Кликов: ${clicks}`);
+            }
+        }
+
+        // Инициализация Web App
+        if (window.Telegram && Telegram.WebApp) {
+            console.log("Telegram.WebApp доступен.");
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+            startGame();
+        } else {
+            console.log("Telegram.WebApp недоступен. Запуск в режиме браузера.");
+            startGame();
+        }
+    </script>
+</body>
+</html>

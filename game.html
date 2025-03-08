@@ -55,7 +55,7 @@
         function sendResult() {
             if (tg) {
                 const message = "Привет, это тестовое сообщение!";
-                const data = JSON.stringify({ message: message }); // Формируем JSON с текстовым сообщением
+                const data = JSON.stringify({ message: message }); // Формируем правильный JSON
                 console.log("Отправка данных в бота:", data);
                 tg.sendData(data); // Отправляем данные
 

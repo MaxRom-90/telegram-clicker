@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Кликер</title>
+    <title>Тестовое Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
     <style>
         body {
@@ -34,17 +34,11 @@
 </head>
 <body>
     <div id="game">
-        <h1>Кликер</h1>
-        <p id="timer">Время: 10 сек</p>
-        <p id="counter">Кликов: 0</p>
-        <button onclick="clickButton()">Кликнуть!</button>
+        <h1>Тестовое Mini App</h1>
+        <button onclick="sendResult()">Отправить сообщение</button>
     </div>
 
     <script>
-        let clicks = 0;
-        let time = 10;
-        let timerId = null;
-
         // Получаем объект Telegram WebApp
         const tg = window.Telegram?.WebApp;
 
@@ -53,43 +47,15 @@
             console.log("Telegram.WebApp доступен.");
             tg.ready(); // Говорим Telegram, что Web App готов
             tg.expand(); // Раскрываем Web App на весь экран
-
-            // Запуск игры
-            startGame();
         } else {
             console.error("Telegram.WebApp недоступен!");
             alert("Откройте игру через Telegram.");
         }
 
-        function startGame() {
-            clicks = 0;
-            time = 10;
-            if (timerId) clearInterval(timerId);
-            document.getElementById("counter").textContent = "Кликов: 0";
-            document.getElementById("timer").textContent = "Время: 10 сек";
-            timerId = setInterval(updateTimer, 1000);
-            console.log("Таймер запущен");
-        }
-
-        function updateTimer() {
-            time--;
-            console.log("Осталось времени:", time);
-            document.getElementById("timer").textContent = `Время: ${time} сек`;
-            if (time <= 0) {
-                clearInterval(timerId);
-                console.log("Время вышло. Кликов:", clicks);
-                sendResult();
-            }
-        }
-
-        function clickButton() {
-            clicks++;
-            document.getElementById("counter").textContent = `Кликов: ${clicks}`;
-        }
-
         function sendResult() {
             if (tg) {
-                const data = JSON.stringify({ clicks: clicks }); // Формируем правильный JSON
+                const message = "Привет, это тестовое сообщение!";
+                const data = JSON.stringify({ message: message }); // Формируем JSON с текстовым сообщением
                 console.log("Отправка данных в бота:", data);
                 tg.sendData(data); // Отправляем данные
 

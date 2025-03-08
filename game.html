@@ -4,15 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Кликер</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             padding: 20px;
-            background: #f0f2f5;
+            background: var(--tg-theme-bg-color, #f0f2f5);
+            color: var(--tg-theme-text-color, #000);
         }
         #game {
-            background: white;
+            background: var(--tg-theme-secondary-bg-color, #fff);
             padding: 20px;
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -22,8 +24,8 @@
         button {
             padding: 15px 30px;
             font-size: 18px;
-            background: #007bff;
-            color: white;
+            background: var(--tg-theme-button-color, #007bff);
+            color: var(--tg-theme-button-text-color, #fff);
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -44,33 +46,32 @@
         let time = 10;
         let timerId = null;
 
+        // Получаем объект Telegram WebApp
+        const tg = window.Telegram?.WebApp;
+
         // Проверяем, доступен ли Telegram.WebApp
-        setTimeout(() => {
-            const tg = window.Telegram?.WebApp;
+        if (tg) {
+            console.log("Telegram.WebApp доступен.");
+            tg.ready(); // Говорим Telegram, что Web App готов
+            tg.expand(); // Раскрываем Web App на весь экран
 
-            if (tg) {
-                console.log("Telegram.WebApp доступен.");
-                tg.ready(); // Говорим Telegram, что Web App готов
-                tg.expand(); // Раскрываем Web App на весь экран
+            // Получаем InitData
+            const initData = tg.initData || "";
+            const initDataUnsafe = tg.initDataUnsafe || {};
 
-                // Получаем InitData
-                const initData = tg.initData || "";
-                const initDataUnsafe = tg.initDataUnsafe || {};
-
-                // Проверяем авторизацию пользователя
-                if (initDataUnsafe.user) {
-                    console.log("Пользователь авторизован:", initDataUnsafe.user);
-                } else {
-                    console.error("Пользователь не авторизован!");
-                }
-
-                // Запуск игры
-                startGame();
+            // Проверяем авторизацию пользователя
+            if (initDataUnsafe.user) {
+                console.log("Пользователь авторизован:", initDataUnsafe.user);
             } else {
-                console.error("Telegram.WebApp недоступен!");
-                alert("Откройте игру через Telegram.");
+                console.error("Пользователь не авторизован!");
             }
-        }, 500); // Задержка 500 мс
+
+            // Запуск игры
+            startGame();
+        } else {
+            console.error("Telegram.WebApp недоступен!");
+            alert("Откройте игру через Telegram.");
+        }
 
         function startGame() {
             clicks = 0;
@@ -99,7 +100,6 @@
         }
 
         function sendResult() {
-            const tg = window.Telegram?.WebApp;
             if (tg) {
                 console.log("Отправка данных в бота:", { clicks: clicks });
                 tg.sendData(JSON.stringify({ clicks: clicks }));

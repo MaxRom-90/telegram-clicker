@@ -89,8 +89,9 @@
 
         function sendResult() {
             if (tg) {
-                console.log("Отправка данных в бота:", { clicks: clicks });
-                tg.sendData(JSON.stringify({ clicks: clicks }));
+                const data = JSON.stringify({ clicks: clicks }); // Формируем правильный JSON
+                console.log("Отправка данных в бота:", data);
+                tg.sendData(data); // Отправляем данные
 
                 // Закрываем Web App через 1 секунду
                 setTimeout(() => {

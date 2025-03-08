@@ -91,7 +91,11 @@
             if (tg) {
                 console.log("Отправка данных в бота:", { clicks: clicks });
                 tg.sendData(JSON.stringify({ clicks: clicks }));
-                tg.close();
+
+                // Закрываем Web App через 1 секунду
+                setTimeout(() => {
+                    tg.close();
+                }, 1000); // Задержка 1 секунда
             } else {
                 console.error("Telegram.WebApp недоступен!");
                 alert("Откройте игру через Telegram.");

@@ -8,7 +8,7 @@ from aiogram import Router
 
 
 # --- Настройки ---
-BOT_TOKEN = "7758985947:AAH7BVZHtLzlgbPB9Fk-vuVIl-1Mo78EC_w"  # Ваш токен 2
+BOT_TOKEN = "7758985947:AAH7BVZHtLzlgbPB9Fk-vuVIl-1Mo78EC_w"  # Ваш токен
 WEB_APP_URL = "https://maxrom-90.github.io/telegram-clicker/game.html"  # Ваш Web App
 SCORES_FILE = "scores.json"
 

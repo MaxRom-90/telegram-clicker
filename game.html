@@ -11,18 +11,16 @@
             text-align: center;
             padding: 20px;
             background: #f0f2f5;
-            margin: 0;
-            height: 100%;
         }
-        #game-container {
+        #game {
             background: white;
-            padding: 25px;
+            padding: 20px;
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             max-width: 400px;
-            margin: 0 auto;
+            margin: 20px auto;
         }
-        #click-btn {
+        button {
             padding: 15px 30px;
             font-size: 18px;
             background: #007bff;
@@ -30,116 +28,79 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            margin: 20px 0;
-            width: 100%;
-            transition: transform 0.1s;
-        }
-        #click-btn:active {
-            transform: scale(0.98);
-        }
-        #counter {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        #timer {
-            font-size: 20px;
-            color: #666;
+            margin: 10px;
         }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <h1>Telegram Clicker</h1>
-        <p id="timer">Время: <span id="time-left">10</span> сек</p>
-        <p id="counter">Кликов: <span id="clicks-count">0</span></p>
-        <button id="click-btn">Кликнуть!</button>
+    <div id="game">
+        <h1>Кликер</h1>
+        <p id="timer">Время: 10 сек</p>
+        <p id="counter">Кликов: 0</p>
+        <button onclick="clickButton()">Кликнуть!</button>
     </div>
 
     <script>
-        // Инициализация
-        const tg = window.Telegram?.WebApp;
         let clicks = 0;
         let time = 10;
-        let timer = null;
-        let gameActive = true;
+        let timerId = null;
 
-        // Элементы интерфейса
-        const counterEl = document.getElementById('clicks-count');
-        const timerEl = document.getElementById('time-left');
-        const clickBtn = document.getElementById('click-btn');
+        // Получаем объект Telegram WebApp
+        const tg = window.Telegram?.WebApp;
 
+        // Проверяем, доступен ли Telegram.WebApp
         if (tg) {
-            tg.ready();
-            tg.expand();
+            console.log("Telegram.WebApp доступен.");
+            tg.ready(); // Говорим Telegram, что Web App готов
+            tg.expand(); // Раскрываем Web App на весь экран
+
+            // Запуск игры
             startGame();
-            
-            // Обработчики событий
-            clickBtn.addEventListener('click', handleClick);
-            
-            // Обработчики закрытия для всех случаев
-            tg.onEvent('viewportChanged', handleClose);
-            window.addEventListener('beforeunload', handleClose);
+        } else {
+            console.error("Telegram.WebApp недоступен!");
+            alert("Откройте игру через Telegram.");
         }
 
         function startGame() {
             clicks = 0;
             time = 10;
-            gameActive = true;
-            updateUI();
-            timer = setInterval(() => {
-                time--;
-                updateUI();
-                if (time <= 0) endGame();
-            }, 1000);
+            if (timerId) clearInterval(timerId);
+            document.getElementById("counter").textContent = "Кликов: 0";
+            document.getElementById("timer").textContent = "Время: 10 сек";
+            timerId = setInterval(updateTimer, 1000);
+            console.log("Таймер запущен");
         }
 
-        function handleClick() {
-            if (!gameActive) return;
-            clicks++;
-            counterEl.textContent = clicks;
-        }
-
-        function updateUI() {
-            timerEl.textContent = time;
-            counterEl.textContent = clicks;
-        }
-
-        function endGame() {
-            if (!gameActive) return;
-            gameActive = false;
-            clearInterval(timer);
-            sendResults();
-        }
-
-        function handleClose(event) {
-            if (gameActive) {
-                endGame();
-                if (event) event.preventDefault();
+        function updateTimer() {
+            time--;
+            console.log("Осталось времени:", time);
+            document.getElementById("timer").textContent = `Время: ${time} сек`;
+            if (time <= 0) {
+                clearInterval(timerId);
+                console.log("Время вышло. Кликов:", clicks);
+                sendResult();
             }
         }
 
-        function sendResults() {
-            if (!tg) return;
-            
-            // Основная отправка
-            tg.sendData(JSON.stringify({
-                clicks: clicks,
-                source: getSource()
-            }));
-            
-            // Дублирующая отправка через 300мс
-            setTimeout(() => {
-                if (!tg.isClosing) {
-                    tg.sendData(JSON.stringify({clicks: clicks}));
-                    tg.close();
-                }
-            }, 300);
+        function clickButton() {
+            clicks++;
+            document.getElementById("counter").textContent = `Кликов: ${clicks}`;
         }
 
-        function getSource() {
-            if (tg.initDataUnsafe?.start_param) return 'deep_link';
-            if (tg.initDataUnsafe?.query_id) return 'menu_button';
-            return 'keyboard_button';
+        function sendResult() {
+            if (tg) {
+                const data = JSON.stringify({ clicks: clicks }); // Формируем правильный JSON
+                console.log("Отправка данных в бота:", data);
+                tg.sendData(data); // Отправляем данные
+
+                // Закрываем Web App через 1 секунду
+                setTimeout(() => {
+                    tg.close();
+                }, 1000); // Задержка 1 секунда
+            } else {
+                console.error("Telegram.WebApp недоступен!");
+                alert("Откройте игру через Telegram.");
+            }
         }
     </script>
 </body>

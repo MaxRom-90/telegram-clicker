@@ -67,10 +67,6 @@
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
-        #timer, #counter {
-            font-size: 16px;
-            margin: 10px 0;
-        }
     </style>
 </head>
 <body>
@@ -80,7 +76,6 @@
         <p id="timer">Время: 10 сек</p>
         <p id="counter">Кликов: 0</p>
         <button id="clickBtn" onclick="clickButton()">Кликнуть!</button>
-        
         <div id="result"></div>
         <button id="finishBtn" onclick="finishGame()">Завершить игру</button>
     </div>
@@ -92,27 +87,20 @@
         let timerId = null;
         let userRecord = 0;
         let isNewRecord = false;
+        let userId = null;
+
+        // Получаем параметры из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        userRecord = parseInt(urlParams.get('record')) || 0;
+        userId = urlParams.get('user_id') || (tg?.initDataUnsafe?.user?.id || "guest");
 
         if (tg) {
             tg.ready();
             tg.expand();
-            loadUserRecord();
+            updateRecordDisplay();
             startGame();
         } else {
             alert("Откройте игру через Telegram!");
-        }
-
-        // Загружаем рекорд из localStorage
-        function loadUserRecord() {
-            const userId = tg.initDataUnsafe?.user?.id || "guest";
-            userRecord = parseInt(localStorage.getItem(`record_${userId}`)) || 0;
-            updateRecordDisplay();
-        }
-
-        // Сохраняем рекорд в localStorage
-        function saveUserRecord() {
-            const userId = tg.initDataUnsafe?.user?.id || "guest";
-            localStorage.setItem(`record_${userId}`, userRecord);
         }
 
         function updateRecordDisplay() {
@@ -155,11 +143,9 @@
             document.getElementById("result").style.display = "block";
             document.getElementById("finishBtn").style.display = "block";
 
-            // Проверяем рекорд
             isNewRecord = clicks > userRecord;
             if (isNewRecord) {
                 userRecord = clicks;
-                saveUserRecord();
             }
 
             updateRecordDisplay();
@@ -177,11 +163,8 @@
                 return;
             }
 
-            // Отправляем результат боту
             const url = `https://t.me/Break_record_bot?start=game_${clicks}`;
             tg.openTelegramLink(url);
-
-            // Закрываем игру
             setTimeout(() => tg.close(), 300);
         }
     </script>

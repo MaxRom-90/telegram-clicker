@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Clicker</title>
+    <title>Кликер</title>
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
     <style>
         body {
@@ -12,6 +12,10 @@
             padding: 20px;
             background: #f0f2f5;
             margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         #game-container {
             background: white;
@@ -21,7 +25,7 @@
             max-width: 400px;
             margin: 0 auto;
         }
-        #click-btn {
+        #click-button {
             padding: 15px 30px;
             font-size: 18px;
             background: #007bff;
@@ -31,15 +35,15 @@
             cursor: pointer;
             margin: 20px 0;
             width: 100%;
-            transition: all 0.2s;
+            transition: transform 0.1s;
         }
-        #click-btn:active {
+        #click-button:active {
             transform: scale(0.98);
         }
         #counter {
             font-size: 24px;
-            margin: 15px 0;
             font-weight: bold;
+            margin: 10px 0;
         }
         #timer {
             font-size: 20px;
@@ -49,49 +53,54 @@
 </head>
 <body>
     <div id="game-container">
-        <h1>Кликер</h1>
+        <h1>Telegram Clicker</h1>
         <p id="timer">Время: 10 сек</p>
         <p id="counter">Кликов: 0</p>
-        <button id="click-btn">Кликнуть!</button>
+        <button id="click-button">Кликнуть!</button>
     </div>
 
     <script>
-        // Инициализация WebApp
+        // Инициализация игры
         const tg = window.Telegram?.WebApp;
         let clicks = 0;
         let time = 10;
         let timer = null;
-        
+        let gameActive = true;
+
         if (tg) {
             tg.ready();
             tg.expand();
-            startGame();
             
-            // Обработчики событий
+            // Основные обработчики
+            document.getElementById('click-button').addEventListener('click', handleClick);
             tg.onEvent('viewportChanged', handleViewportChange);
-            document.getElementById('click-btn').addEventListener('click', handleClick);
+            
+            startGame();
         } else {
-            alert('Откройте игру через Telegram бота!');
+            alert('Пожалуйста, откройте игру через Telegram бота!');
         }
 
         function startGame() {
             clicks = 0;
             time = 10;
-            clearInterval(timer);
+            gameActive = true;
             updateUI();
             timer = setInterval(updateTimer, 1000);
         }
 
         function updateTimer() {
+            if (!gameActive) return;
+            
             time--;
             updateUI();
+            
             if (time <= 0) {
-                clearInterval(timer);
-                sendResults();
+                endGame();
             }
         }
 
         function handleClick() {
+            if (!gameActive) return;
             clicks++;
             updateUI();
         }
@@ -101,34 +110,40 @@
             document.getElementById('timer').textContent = `Время: ${time} сек`;
         }
 
+        function endGame() {
+            gameActive = false;
+            clearInterval(timer);
+            sendResults();
+        }
+
         function handleViewportChange(event) {
-            if (!event.isStateStable) {
-                sendResults();
+            if (!event.isStateStable && gameActive) {
+                endGame();
             }
         }
 
         function sendResults() {
             if (!tg) return;
             
-            // Основная отправка данных
+            // Основная отправка
             tg.sendData(JSON.stringify({
                 clicks: clicks,
                 via_menu: !!tg.initDataUnsafe?.query_id
             }));
             
-            // Дублирующая отправка через 300мс
+            // Дублирующая отправка через 500мс
             setTimeout(() => {
                 if (!tg.isClosing) {
                     tg.sendData(JSON.stringify({clicks: clicks}));
                 }
-            }, 300);
+            }, 500);
             
-            // Закрытие WebApp
+            // Гарантированное закрытие
             setTimeout(() => {
                 if (!tg.isClosing) {
                     tg.close();
                 }
-            }, 1000);
+            }, 1500);
         }
     </script>
 </body>

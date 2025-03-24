@@ -20,66 +20,55 @@
     </div>
 
     <script>
-        const tg = window.Telegram?.WebApp;
-        let clicks = 0;
-        let time = 10;
-        let timerId = null;
+    const tg = window.Telegram?.WebApp;
+    let clicks = 0;
+    let time = 10;
+    let timerId = null;
 
-        if (tg) {
-            tg.ready();
-            tg.expand(); // Раскрываем на весь экран
-            console.log("WebApp запущен. initData:", tg.initData); // Логируем параметры запуска
-            startGame();
-        } else {
-            alert("Откройте игру через Telegram!");
-        }
+    if (tg) {
+        tg.ready();
+        tg.expand();
+        startGame();
+    } else {
+        alert("Откройте игру через Telegram!");
+    }
 
-        function startGame() {
-            clicks = 0;
-            time = 10;
+    function startGame() {
+        clicks = 0;
+        time = 10;
+        clearInterval(timerId);
+        document.getElementById("counter").textContent = "Кликов: 0";
+        document.getElementById("timer").textContent = "Время: 10 сек";
+        timerId = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+        time--;
+        document.getElementById("timer").textContent = `Время: ${time} сек`;
+        if (time <= 0) {
             clearInterval(timerId);
-            document.getElementById("counter").textContent = "Кликов: 0";
-            document.getElementById("timer").textContent = "Время: 10 сек";
-            timerId = setInterval(updateTimer, 1000);
+            sendResult();
+        }
+    }
+
+    function clickButton() {
+        clicks++;
+        document.getElementById("counter").textContent = `Кликов: ${clicks}`;
+    }
+
+    function sendResult() {
+        if (!tg) {
+            alert("Игра доступна только в Telegram!");
+            return;
         }
 
-        function updateTimer() {
-            time--;
-            document.getElementById("timer").textContent = `Время: ${time} сек`;
-            if (time <= 0) {
-                clearInterval(timerId);
-                sendResult();
-            }
-        }
+        // Всегда отправляем результат через ссылку (работает и для Menu Button, и для Reply-клавиатуры)
+        const botUsername = "your_bot_username"; // Замените на username вашего бота!
+        const url = `https://t.me/${botUsername}?start=game_${clicks}`;
+        tg.openTelegramLink(url); // Открываем бота с параметром
 
-        function clickButton() {
-            clicks++;
-            document.getElementById("counter").textContent = `Кликов: ${clicks}`;
-        }
-
-        function sendResult() {
-            if (!tg) {
-                alert("Игра доступна только в Telegram!");
-                return;
-            }
-
-            // Определяем способ запуска:
-            // Если есть initDataUnsafe.user — значит, запущено через Reply-клавиатуру
-            // Если нет — значит, через Menu Button
-            const isLaunchedViaMenuButton = !tg.initDataUnsafe?.user;
-
-            if (isLaunchedViaMenuButton) {
-                // Запущено через Menu Button → открываем бота с параметром
-                const botUsername = "Break_record_bot; // Замените на username вашего бота!
-                const url = `https://t.me/${botUsername}?start=game_${clicks}`;
-                tg.openTelegramLink(url); // Открываем ссылку в Telegram
-            } else {
-                // Запущено через Reply-клавиатуру → отправляем данные через sendData
-                tg.sendData(JSON.stringify({ clicks: clicks }));
-            }
-
-            setTimeout(() => tg.close(), 1000);
-        }
-    </script>
+        setTimeout(() => tg.close(), 1000);
+    }
+</script>
 </body>
 </html>

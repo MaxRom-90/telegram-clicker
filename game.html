@@ -28,6 +28,7 @@
     if (tg) {
         tg.ready();
         tg.expand();
+        console.log("Запуск WebApp. initDataUnsafe:", tg.initDataUnsafe);
         startGame();
     } else {
         alert("Откройте игру через Telegram!");
@@ -62,11 +63,12 @@
             return;
         }
 
-        // Всегда отправляем результат через ссылку (работает и для Menu Button, и для Reply-клавиатуры)
-        const botUsername = "Break_record_bot"; // Замените на username вашего бота!
+        // Всегда отправляем результат через ссылку (работает для обоих способов)
+        const botUsername = "your_bot_username"; // Замените на username вашего бота!
         const url = `https://t.me/${botUsername}?start=game_${clicks}`;
-        tg.openTelegramLink(url); // Открываем бота с параметром
+        tg.openTelegramLink(url);
 
+        // Закрываем WebApp в любом случае через 1 секунду
         setTimeout(() => tg.close(), 1000);
     }
 </script>

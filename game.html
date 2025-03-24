@@ -12,8 +12,9 @@
             padding: 20px;
             background: #f0f2f5;
             margin: 0;
+            height: 100%;
         }
-        #game {
+        #game-container {
             background: white;
             padding: 25px;
             border-radius: 15px;
@@ -47,41 +48,37 @@
     </style>
 </head>
 <body>
-    <div id="game">
+    <div id="game-container">
         <h1>Telegram Clicker</h1>
-        <p id="timer">Время: 10 сек</p>
-        <p id="counter">Кликов: 0</p>
+        <p id="timer">Время: <span id="time-left">10</span> сек</p>
+        <p id="counter">Кликов: <span id="clicks-count">0</span></p>
         <button id="click-btn">Кликнуть!</button>
     </div>
 
     <script>
+        // Инициализация
         const tg = window.Telegram?.WebApp;
         let clicks = 0;
         let time = 10;
         let timer = null;
         let gameActive = true;
 
+        // Элементы интерфейса
+        const counterEl = document.getElementById('clicks-count');
+        const timerEl = document.getElementById('time-left');
+        const clickBtn = document.getElementById('click-btn');
+
         if (tg) {
             tg.ready();
             tg.expand();
             startGame();
             
-            // Обработчик кликов
-            document.getElementById('click-btn').addEventListener('click', () => {
-                if (gameActive) {
-                    clicks++;
-                    document.getElementById('counter').textContent = `Кликов: ${clicks}`;
-                }
-            });
+            // Обработчики событий
+            clickBtn.addEventListener('click', handleClick);
             
-            // Обработчик закрытия
-            tg.onEvent('viewportChanged', (e) => {
-                if (!e.isStateStable && gameActive) {
-                    endGame();
-                }
-            });
-        } else {
-            alert('Откройте игру через Telegram бота!');
+            // Обработчики закрытия для всех случаев
+            tg.onEvent('viewportChanged', handleClose);
+            window.addEventListener('beforeunload', handleClose);
         }
 
         function startGame() {
@@ -96,9 +93,15 @@
             }, 1000);
         }
 
+        function handleClick() {
+            if (!gameActive) return;
+            clicks++;
+            counterEl.textContent = clicks;
+        }
+
         function updateUI() {
-            document.getElementById('counter').textContent = `Кликов: ${clicks}`;
-            document.getElementById('timer').textContent = `Время: ${time} сек`;
+            timerEl.textContent = time;
+            counterEl.textContent = clicks;
         }
 
         function endGame() {
@@ -108,28 +111,35 @@
             sendResults();
         }
 
+        function handleClose(event) {
+            if (gameActive) {
+                endGame();
+                if (event) event.preventDefault();
+            }
+        }
+
         function sendResults() {
             if (!tg) return;
             
             // Основная отправка
             tg.sendData(JSON.stringify({
                 clicks: clicks,
-                source: tg.initDataUnsafe?.query_id ? 'menu' : 'button'
+                source: getSource()
             }));
             
             // Дублирующая отправка через 300мс
             setTimeout(() => {
                 if (!tg.isClosing) {
                     tg.sendData(JSON.stringify({clicks: clicks}));
-                }
-            }, 300);
-            
-            // Гарантированное закрытие
-            setTimeout(() => {
-                if (!tg.isClosing) {
                     tg.close();
                 }
-            }, 1000);
+            }, 300);
+        }
+
+        function getSource() {
+            if (tg.initDataUnsafe?.start_param) return 'deep_link';
+            if (tg.initDataUnsafe?.query_id) return 'menu_button';
+            return 'keyboard_button';
         }
     </script>
 </body>

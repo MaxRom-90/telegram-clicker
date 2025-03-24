@@ -67,43 +67,52 @@
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
+        #timer, #counter {
+            font-size: 16px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
     <div id="game">
         <h1>Кликер</h1>
         <p id="record">🏆 Текущий рекорд: 0</p>
-        <!-- Остальные элементы остаются -->
+        <p id="timer">Время: 10 сек</p>
+        <p id="counter">Кликов: 0</p>
+        <button id="clickBtn" onclick="clickButton()">Кликнуть!</button>
+        
+        <div id="result"></div>
+        <button id="finishBtn" onclick="finishGame()">Завершить игру</button>
     </div>
 
     <script>
         const tg = window.Telegram?.WebApp;
+        let clicks = 0;
+        let time = 10;
+        let timerId = null;
         let userRecord = 0;
         let isNewRecord = false;
 
         if (tg) {
             tg.ready();
             tg.expand();
-            
-            // Пытаемся получить user_id разными способами
-            const userId = tg.initDataUnsafe?.user?.id || 
-                          tg.initDataUnsafe?.query_id?.split('_')[0] || 
-                          Date.now().toString();
-            
-            // Загружаем рекорд из Бота (эмуляция)
-            loadRecordFromBot(userId);
+            loadUserRecord();
+            startGame();
+        } else {
+            alert("Откройте игру через Telegram!");
         }
 
-        async function loadRecordFromBot(userId) {
-            // Эмуляция запроса к боту - в реальности замените на fetch()
-            setTimeout(() => {
-                // Здесь должен быть реальный запрос к вашему API/боту
-                // Например: fetch(`/get_record?user_id=${userId}`)
-                
-                // Для теста используем случайный рекорд
-                userRecord = Math.floor(Math.random() * 50) + 20;
-                updateRecordDisplay();
-            }, 300);
+        // Загружаем рекорд из localStorage
+        function loadUserRecord() {
+            const userId = tg.initDataUnsafe?.user?.id || "guest";
+            userRecord = parseInt(localStorage.getItem(`record_${userId}`)) || 0;
+            updateRecordDisplay();
+        }
+
+        // Сохраняем рекорд в localStorage
+        function saveUserRecord() {
+            const userId = tg.initDataUnsafe?.user?.id || "guest";
+            localStorage.setItem(`record_${userId}`, userRecord);
         }
 
         function updateRecordDisplay() {
@@ -115,19 +124,65 @@
             }
         }
 
+        function startGame() {
+            clicks = 0;
+            time = 10;
+            clearInterval(timerId);
+            document.getElementById("counter").textContent = "Кликов: 0";
+            document.getElementById("timer").textContent = "Время: 10 сек";
+            document.getElementById("result").style.display = "none";
+            document.getElementById("finishBtn").style.display = "none";
+            document.getElementById("clickBtn").style.display = "block";
+            timerId = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            time--;
+            document.getElementById("timer").textContent = `Время: ${time} сек`;
+            if (time <= 0) {
+                clearInterval(timerId);
+                endGame();
+            }
+        }
+
+        function clickButton() {
+            clicks++;
+            document.getElementById("counter").textContent = `Кликов: ${clicks}`;
+        }
+
         function endGame() {
+            document.getElementById("clickBtn").style.display = "none";
+            document.getElementById("result").style.display = "block";
+            document.getElementById("finishBtn").style.display = "block";
+
             // Проверяем рекорд
             isNewRecord = clicks > userRecord;
             if (isNewRecord) {
                 userRecord = clicks;
-                sendRecordToBot(); // Отправляем новый рекорд боту
+                saveUserRecord();
             }
+
             updateRecordDisplay();
+
+            document.getElementById("result").innerHTML = `
+                <p>🎯 Ваш результат: <b>${clicks}</b> кликов!</p>
+                ${isNewRecord ? '<p style="color: #28a745;">🎉 Вы побили свой рекорд!</p>' : `<p>🏅 Текущий рекорд: ${userRecord}</p>`}
+                <p>Нажмите "Завершить игру", чтобы сохранить результат.</p>
+            `;
         }
 
-        function sendRecordToBot() {
-            // В реальности здесь должен быть fetch() к вашему API
-            console.log("Отправляем рекорд:", userRecord);
+        function finishGame() {
+            if (!tg) {
+                alert("Игра доступна только в Telegram!");
+                return;
+            }
+
+            // Отправляем результат боту
+            const url = `https://t.me/Break_record_bot?start=game_${clicks}`;
+            tg.openTelegramLink(url);
+
+            // Закрываем игру
+            setTimeout(() => tg.close(), 300);
         }
     </script>
 </body>

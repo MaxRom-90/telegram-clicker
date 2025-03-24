@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Кликер</title>
+    <title>Telegram Clicker</title>
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
     <style>
         body {
@@ -13,15 +13,15 @@
             background: #f0f2f5;
             margin: 0;
         }
-        #game {
+        #game-container {
             background: white;
-            padding: 20px;
+            padding: 25px;
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             max-width: 400px;
             margin: 0 auto;
         }
-        button {
+        #click-btn {
             padding: 15px 30px;
             font-size: 18px;
             background: #007bff;
@@ -29,82 +29,105 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            margin: 10px 0;
+            margin: 20px 0;
             width: 100%;
+            transition: all 0.2s;
         }
-        #counter, #timer {
+        #click-btn:active {
+            transform: scale(0.98);
+        }
+        #counter {
             font-size: 24px;
             margin: 15px 0;
+            font-weight: bold;
+        }
+        #timer {
+            font-size: 20px;
+            color: #666;
         }
     </style>
 </head>
 <body>
-    <div id="game">
+    <div id="game-container">
         <h1>Кликер</h1>
         <p id="timer">Время: 10 сек</p>
         <p id="counter">Кликов: 0</p>
-        <button onclick="clickButton()">Кликнуть!</button>
+        <button id="click-btn">Кликнуть!</button>
     </div>
 
     <script>
+        // Инициализация WebApp
+        const tg = window.Telegram?.WebApp;
         let clicks = 0;
         let time = 10;
-        let timerId = null;
-        const tg = window.Telegram?.WebApp;
-
-        // Инициализация WebApp
+        let timer = null;
+        
         if (tg) {
             tg.ready();
             tg.expand();
             startGame();
             
-            // Обработчик закрытия WebApp
-            tg.onEvent('viewportChanged', (event) => {
-                if (!event.isStateStable && tg.isClosingConfirmationEnabled) {
-                    sendResult();
-                }
-            });
+            // Обработчики событий
+            tg.onEvent('viewportChanged', handleViewportChange);
+            document.getElementById('click-btn').addEventListener('click', handleClick);
+        } else {
+            alert('Откройте игру через Telegram бота!');
         }
 
         function startGame() {
             clicks = 0;
             time = 10;
-            clearInterval(timerId);
+            clearInterval(timer);
             updateUI();
-            timerId = setInterval(updateTimer, 1000);
+            timer = setInterval(updateTimer, 1000);
         }
 
         function updateTimer() {
             time--;
             updateUI();
             if (time <= 0) {
-                clearInterval(timerId);
-                sendResult();
+                clearInterval(timer);
+                sendResults();
             }
         }
 
-        function clickButton() {
+        function handleClick() {
             clicks++;
             updateUI();
         }
 
         function updateUI() {
-            document.getElementById("counter").textContent = `Кликов: ${clicks}`;
-            document.getElementById("timer").textContent = `Время: ${time} сек`;
+            document.getElementById('counter').textContent = `Кликов: ${clicks}`;
+            document.getElementById('timer').textContent = `Время: ${time} сек`;
         }
 
-        function sendResult() {
+        function handleViewportChange(event) {
+            if (!event.isStateStable) {
+                sendResults();
+            }
+        }
+
+        function sendResults() {
             if (!tg) return;
             
-            const data = {
+            // Основная отправка данных
+            tg.sendData(JSON.stringify({
                 clicks: clicks,
-                source: tg.initDataUnsafe?.start_param || 'direct'
-            };
+                via_menu: !!tg.initDataUnsafe?.query_id
+            }));
             
-            tg.sendData(JSON.stringify(data));
-            
+            // Дублирующая отправка через 300мс
             setTimeout(() => {
-                tg.close();
+                if (!tg.isClosing) {
+                    tg.sendData(JSON.stringify({clicks: clicks}));
+                }
+            }, 300);
+            
+            // Закрытие WebApp
+            setTimeout(() => {
+                if (!tg.isClosing) {
+                    tg.close();
+                }
             }, 1000);
         }
     </script>

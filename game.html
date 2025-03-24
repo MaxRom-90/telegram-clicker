@@ -52,6 +52,11 @@
             display: none;
             color: #333;
         }
+        #record {
+            font-size: 16px;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
         #timer, #counter {
             font-size: 16px;
             margin: 10px 0;
@@ -61,6 +66,7 @@
 <body>
     <div id="game">
         <h1>Кликер</h1>
+        <p id="record">🏆 Текущий рекорд: загрузка...</p>
         <p id="timer">Время: 10 сек</p>
         <p id="counter">Кликов: 0</p>
         <button id="clickBtn" onclick="clickButton()">Кликнуть!</button>
@@ -74,13 +80,28 @@
         let clicks = 0;
         let time = 10;
         let timerId = null;
+        let userRecord = 0;
 
         if (tg) {
             tg.ready();
             tg.expand();
+            loadUserRecord(); // Загружаем рекорд при старте
             startGame();
         } else {
             alert("Откройте игру через Telegram!");
+        }
+
+        // Загружаем рекорд пользователя из initData
+        function loadUserRecord() {
+            if (tg.initDataUnsafe?.user?.id) {
+                const userId = tg.initDataUnsafe.user.id;
+                // В реальном проекте здесь может быть запрос к API вашего бота
+                // Для примера используем localStorage (в реальности не сохраняет данные между запусками)
+                userRecord = localStorage.getItem(`record_${userId}`) || 0;
+                document.getElementById("record").textContent = `🏆 Текущий рекорд: ${userRecord}`;
+            } else {
+                document.getElementById("record").textContent = "🏆 Рекорд: неизвестен (войдите в бота)";
+            }
         }
 
         function startGame() {
@@ -113,9 +134,21 @@
             document.getElementById("clickBtn").style.display = "none";
             document.getElementById("result").style.display = "block";
             document.getElementById("finishBtn").style.display = "block";
+
+            // Проверяем, побит ли рекорд
+            const isNewRecord = clicks > userRecord;
+            if (isNewRecord) {
+                userRecord = clicks;
+                if (tg.initDataUnsafe?.user?.id) {
+                    localStorage.setItem(`record_${tg.initDataUnsafe.user.id}`, clicks);
+                }
+                document.getElementById("record").textContent = `🏆 Новый рекорд: ${userRecord}!`;
+            }
+
             document.getElementById("result").innerHTML = `
-                <p>🏆 Ваш результат: <b>${clicks}</b> кликов!</p>
-                <p>Нажмите "Завершить игру", чтобы отправить результат.</p>
+                <p>🎯 Ваш результат: <b>${clicks}</b> кликов!</p>
+                ${isNewRecord ? '<p style="color: #28a745;">🎉 Вы побили свой рекорд!</p>' : `<p>🏅 Текущий рекорд: ${userRecord}</p>`}
+                <p>Нажмите "Завершить игру", чтобы сохранить результат.</p>
             `;
         }
 

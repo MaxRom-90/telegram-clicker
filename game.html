@@ -44,6 +44,7 @@
         let clicks = 0;
         let time = 10;
         let timerId = null;
+        let isLaunchedViaButton = false;
 
         // Получаем объект Telegram WebApp
         const tg = window.Telegram?.WebApp;
@@ -53,6 +54,15 @@
             console.log("Telegram.WebApp доступен.");
             tg.ready(); // Говорим Telegram, что Web App готов
             tg.expand(); // Раскрываем Web App на весь экран
+
+            // Проверяем, как было запущено приложение
+            if (tg.initDataUnsafe?.start_param) {
+                console.log("Запущено через кнопку 'Открыть приложение'");
+                isLaunchedViaButton = true;
+            } else {
+                console.log("Запущено через кнопку '▶️ Играть'");
+                isLaunchedViaButton = false;
+            }
 
             // Запуск игры
             startGame();
@@ -89,14 +99,24 @@
 
         function sendResult() {
             if (tg) {
-                const data = JSON.stringify({ clicks: clicks }); // Формируем правильный JSON
-                console.log("Отправка данных в бота:", data);
-                tg.sendData(data); // Отправляем данные
+                if (isLaunchedViaButton) {
+                    // Если игра запущена через кнопку "Открыть приложение"
+                    // Используем метод Telegram.WebApp.openTelegramLink для отправки результата
+                    const botUsername = "Break_record_bot"; // Замените на username вашего бота
+                    const link = `https://t.me/${botUsername}?start=game_${clicks}`;
+                    tg.openTelegramLink(link);
+                } else {
+                    // Если игра запущена через кнопку "▶️ Играть"
+                    // Используем стандартный метод отправки данных
+                    const data = JSON.stringify({ clicks: clicks });
+                    console.log("Отправка данных в бота:", data);
+                    tg.sendData(data);
+                }
 
                 // Закрываем Web App через 1 секунду
                 setTimeout(() => {
                     tg.close();
-                }, 1000); // Задержка 1 секунда
+                }, 1000);
             } else {
                 console.error("Telegram.WebApp недоступен!");
                 alert("Откройте игру через Telegram.");

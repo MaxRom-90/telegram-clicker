@@ -6,7 +6,7 @@
     <title>Кликер</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
         #game { background: white; padding: 20px; border-radius: 15px; max-width: 400px; margin: 0 auto; }
         button { padding: 15px 30px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; }
     </style>
@@ -27,7 +27,8 @@
 
         if (tg) {
             tg.ready();
-            tg.expand();
+            tg.expand(); // Раскрываем на весь экран
+            console.log("WebApp запущен. initData:", tg.initData); // Логируем параметры запуска
             startGame();
         } else {
             alert("Откройте игру через Telegram!");
@@ -62,16 +63,18 @@
                 return;
             }
 
-            // Определяем способ запуска
-            const isLaunchedViaMenuButton = !tg.initData; // Если нет initData, значит запущено через Menu Button
+            // Определяем способ запуска:
+            // Если есть initDataUnsafe.user — значит, запущено через Reply-клавиатуру
+            // Если нет — значит, через Menu Button
+            const isLaunchedViaMenuButton = !tg.initDataUnsafe?.user;
 
             if (isLaunchedViaMenuButton) {
-                // Вариант 1: Запущено через Menu Button → открываем ссылку с результатом
-                const botUsername = "Break_record_bot"; // Замените на username вашего бота!
+                // Запущено через Menu Button → открываем бота с параметром
+                const botUsername = "Break_record_bot; // Замените на username вашего бота!
                 const url = `https://t.me/${botUsername}?start=game_${clicks}`;
-                tg.openTelegramLink(url); // Открываем бота с параметром
+                tg.openTelegramLink(url); // Открываем ссылку в Telegram
             } else {
-                // Вариант 2: Запущено через Reply-клавиатуру → отправляем данные через sendData
+                // Запущено через Reply-клавиатуру → отправляем данные через sendData
                 tg.sendData(JSON.stringify({ clicks: clicks }));
             }
 

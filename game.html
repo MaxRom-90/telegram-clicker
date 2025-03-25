@@ -3,72 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Кликер - Сброс рекорда</title>
+    <title>Telegram Clicker Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
         body {
-            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
         }
         
-        #game-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        .game-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 25px;
             width: 100%;
             max-width: 400px;
-            padding: 30px;
             text-align: center;
-            position: relative;
         }
         
-        /* ... (остальные стили остаются без изменений) ... */
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
         
-        #reset-btn {
-            background: #e74c3c;
+        .game-info {
+            margin-bottom: 20px;
+        }
+        
+        .record-display {
+            font-size: 18px;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .new-record {
+            color: #2ecc71;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .timer, .counter {
+            font-size: 20px;
+            margin: 10px 0;
+            color: #7f8c8d;
+        }
+        
+        .click-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 15px 0;
+            transition: all 0.3s;
+            width: 100%;
+            max-width: 200px;
+        }
+        
+        .click-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+        
+        .click-btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .result {
+            margin: 20px 0;
+            font-size: 18px;
+            display: none;
+        }
+        
+        .finish-btn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+            display: none;
+            transition: all 0.3s;
+        }
+        
+        .finish-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        .reset-btn {
+            background-color: #e74c3c;
             color: white;
             border: none;
             border-radius: 50px;
             padding: 10px 20px;
             font-size: 14px;
             cursor: pointer;
-            margin-top: 15px;
+            margin-top: 10px;
             transition: all 0.3s;
-            position: absolute;
-            top: 15px;
-            right: 15px;
         }
         
-        #reset-btn:hover {
-            background: #c0392b;
+        .reset-btn:hover {
+            background-color: #c0392b;
         }
         
-        #confirm-reset {
+        .confirm-dialog {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.7);
+            background-color: rgba(0, 0, 0, 0.7);
             z-index: 100;
             justify-content: center;
             align-items: center;
         }
         
-        #confirm-box {
-            background: white;
+        .confirm-box {
+            background-color: white;
             padding: 25px;
             border-radius: 15px;
             text-align: center;
@@ -76,7 +151,7 @@
             width: 90%;
         }
         
-        #confirm-box button {
+        .confirm-btn {
             margin: 10px 5px;
             padding: 8px 15px;
             border: none;
@@ -84,60 +159,64 @@
             cursor: pointer;
         }
         
-        #confirm-yes {
-            background: #e74c3c;
+        .confirm-yes {
+            background-color: #e74c3c;
             color: white;
         }
         
-        #confirm-no {
-            background: #3498db;
+        .confirm-no {
+            background-color: #3498db;
             color: white;
         }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <button id="reset-btn">Сбросить рекорд</button>
-        <h1>⚡ Telegram Кликер</h1>
-        <div id="record-display">Загрузка рекорда...</div>
-        <p id="timer">Время: 10 сек</p>
-        <p id="counter">Кликов: 0</p>
-        <button id="click-btn">КЛИКНУТЬ!</button>
-        <div id="result"></div>
-        <button id="finish-btn">ЗАВЕРШИТЬ ИГРУ</button>
+    <div class="game-container">
+        <h1>⚡ Telegram Clicker</h1>
+        <div class="record-display" id="record-display">Рекорд: 0</div>
+        <div class="game-info">
+            <p class="timer" id="timer">Время: 10 сек</p>
+            <p class="counter" id="counter">Кликов: 0</p>
+        </div>
+        <button class="click-btn" id="click-btn">КЛИКНУТЬ!</button>
+        <div class="result" id="result"></div>
+        <button class="finish-btn" id="finish-btn">ЗАВЕРШИТЬ ИГРУ</button>
+        <button class="reset-btn" id="reset-btn">СБРОСИТЬ РЕКОРД</button>
     </div>
 
-    <div id="confirm-reset">
-        <div id="confirm-box">
-            <h3>Подтверждение</h3>
+    <div class="confirm-dialog" id="confirm-dialog">
+        <div class="confirm-box">
+            <h3>Подтверждение сброса</h3>
             <p>Вы точно хотите сбросить свой рекорд?</p>
             <p><small>Это действие нельзя отменить</small></p>
-            <button id="confirm-yes">Да, сбросить</button>
-            <button id="confirm-no">Нет, отмена</button>
+            <button class="confirm-btn confirm-yes" id="confirm-yes">Да, сбросить</button>
+            <button class="confirm-btn confirm-no" id="confirm-no">Отмена</button>
         </div>
     </div>
 
     <script>
         // Инициализация переменных
-        const tg = window.Telegram?.WebApp;
+        const tg = window.Telegram.WebApp;
         const urlParams = new URLSearchParams(window.location.search);
+        
         let userRecord = parseInt(urlParams.get('record')) || 0;
         let userId = urlParams.get('user_id') || 'guest';
         let clicks = 0;
         let time = 10;
         let timerId = null;
         let isNewRecord = false;
+        let gameActive = false;
 
-        // Элементы интерфейса
+        // Получаем элементы DOM
         const elements = {
-            record: document.getElementById('record-display'),
+            recordDisplay: document.getElementById('record-display'),
             timer: document.getElementById('timer'),
             counter: document.getElementById('counter'),
             clickBtn: document.getElementById('click-btn'),
             result: document.getElementById('result'),
             finishBtn: document.getElementById('finish-btn'),
             resetBtn: document.getElementById('reset-btn'),
-            confirmReset: document.getElementById('confirm-reset'),
+            confirmDialog: document.getElementById('confirm-dialog'),
             confirmYes: document.getElementById('confirm-yes'),
             confirmNo: document.getElementById('confirm-no')
         };
@@ -152,16 +231,16 @@
                 tg.expand();
                 tg.enableClosingConfirmation();
             }
-            
-            startGame();
         }
 
         // Обновление отображения рекорда
         function updateRecordDisplay() {
-            elements.record.textContent = `🏆 Текущий рекорд: ${userRecord}`;
+            elements.recordDisplay.textContent = `Рекорд: ${userRecord}`;
             if (isNewRecord) {
-                elements.record.classList.add('new-record');
-                elements.record.textContent = `🎉 Новый рекорд: ${userRecord}!`;
+                elements.recordDisplay.classList.add('new-record');
+                elements.recordDisplay.textContent = `🎉 Новый рекорд: ${userRecord}!`;
+            } else {
+                elements.recordDisplay.classList.remove('new-record');
             }
         }
 
@@ -174,23 +253,106 @@
             elements.confirmNo.addEventListener('click', hideResetConfirm);
         }
 
-        // Показать подтверждение сброса
-        function showResetConfirm() {
-            elements.confirmReset.style.display = 'flex';
+        // Запуск игры
+        function startGame() {
+            clicks = 0;
+            time = 10;
+            gameActive = true;
+            isNewRecord = false;
+            
+            elements.counter.textContent = 'Кликов: 0';
+            elements.timer.textContent = 'Время: 10 сек';
+            elements.result.style.display = 'none';
+            elements.finishBtn.style.display = 'none';
+            elements.clickBtn.disabled = false;
+            
+            clearInterval(timerId);
+            timerId = setInterval(updateTimer, 1000);
+            updateRecordDisplay();
         }
 
-        // Скрыть подтверждение сброса
+        // Обновление таймера
+        function updateTimer() {
+            time--;
+            elements.timer.textContent = `Время: ${time} сек`;
+            
+            if (time <= 0) {
+                endGame();
+            }
+        }
+
+        // Обработка кликов
+        function handleClick() {
+            if (!gameActive) return;
+            
+            clicks++;
+            elements.counter.textContent = `Кликов: ${clicks}`;
+        }
+
+        // Завершение игры
+        function endGame() {
+            clearInterval(timerId);
+            gameActive = false;
+            elements.clickBtn.disabled = true;
+            
+            isNewRecord = clicks > userRecord;
+            if (isNewRecord) {
+                userRecord = clicks;
+            }
+            
+            showResult();
+        }
+
+        // Показать результаты
+        function showResult() {
+            elements.result.style.display = 'block';
+            elements.finishBtn.style.display = 'block';
+            
+            elements.result.innerHTML = `
+                <p>🎯 Ваш результат: <strong>${clicks}</strong> кликов!</p>
+                ${isNewRecord 
+                    ? '<p style="color: #2ecc71;">🎉 Вы побили рекорд!</p>' 
+                    : `<p>🏅 Текущий рекорд: ${userRecord}</p>`}
+            `;
+            
+            updateRecordDisplay();
+        }
+
+        // Завершение и отправка результатов
+        function finishGame() {
+            if (tg) {
+                const resultData = {
+                    action: 'save_result',
+                    user_id: userId,
+                    clicks: clicks,
+                    is_new_record: isNewRecord
+                };
+                
+                tg.sendData(JSON.stringify(resultData));
+                setTimeout(() => tg.close(), 300);
+            } else {
+                alert(`Игра завершена! Ваш результат: ${clicks} кликов`);
+                startGame(); // Перезапуск для тестирования
+            }
+        }
+
+        // Показать диалог подтверждения сброса
+        function showResetConfirm() {
+            elements.confirmDialog.style.display = 'flex';
+        }
+
+        // Скрыть диалог подтверждения
         function hideResetConfirm() {
-            elements.confirmReset.style.display = 'none';
+            elements.confirmDialog.style.display = 'none';
         }
 
         // Сброс рекорда
         function resetRecord() {
             userRecord = 0;
+            isNewRecord = false;
             updateRecordDisplay();
             hideResetConfirm();
             
-            // Отправляем команду сброса боту
             if (tg) {
                 tg.sendData(JSON.stringify({
                     action: 'reset_record',
@@ -198,21 +360,14 @@
                 }));
             }
             
-            // Показываем уведомление
-            alert('Ваш рекорд был сброшен!');
+            alert('Рекорд сброшен!');
         }
 
-        // ... (остальные функции остаются без изменений) ...
-
-        // Запуск при загрузке
-        if (tg) {
-            tg.ready();
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
             initGame();
-        } else {
-            // Режим тестирования вне Telegram
-            alert('Для лучшего опыта откройте игру через Telegram бота');
-            initGame();
-        }
+            startGame();
+        });
     </script>
 </body>
 </html>

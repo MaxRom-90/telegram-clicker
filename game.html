@@ -107,8 +107,16 @@
             display: none;
         }
         
-        .finish-btn:hover {
-            background-color: #27ae60;
+        .restart-btn {
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+            display: none;
         }
         
         .reset-btn {
@@ -122,8 +130,9 @@
             margin-top: 10px;
         }
         
-        .reset-btn:hover {
-            background-color: #c0392b;
+        .reset-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
         }
         
         .confirm-dialog {
@@ -176,7 +185,8 @@
         <p class="counter" id="counter">Кликов: 0</p>
         <button class="click-btn" id="click-btn">КЛИКНУТЬ!</button>
         <div class="result" id="result"></div>
-        <button class="finish-btn" id="finish-btn">ЗАВЕРШИТЬ ИГРУ</button>
+        <button class="finish-btn" id="finish-btn">ЗАВЕРШИТЬ</button>
+        <button class="restart-btn" id="restart-btn">ИГРАТЬ СНОВА</button>
         <button class="reset-btn" id="reset-btn">СБРОСИТЬ РЕКОРД</button>
     </div>
 
@@ -186,7 +196,7 @@
             <p>Вы точно хотите сбросить свой рекорд?</p>
             <p><small>Это действие нельзя отменить</small></p>
             <button class="confirm-btn confirm-yes" id="confirm-yes">Да, сбросить</button>
-            <button class="confirm-btn confirm-no" id="confirm-no">Нет, отмена</button>
+            <button class="confirm-btn confirm-no" id="confirm-no">Отмена</button>
         </div>
     </div>
 
@@ -213,6 +223,7 @@
             clickBtn: document.getElementById('click-btn'),
             result: document.getElementById('result'),
             finishBtn: document.getElementById('finish-btn'),
+            restartBtn: document.getElementById('restart-btn'),
             resetBtn: document.getElementById('reset-btn'),
             confirmDialog: document.getElementById('confirm-dialog'),
             confirmYes: document.getElementById('confirm-yes'),
@@ -246,6 +257,8 @@
             if (isNewRecord) {
                 elements.recordDisplay.classList.add('new-record');
                 elements.recordDisplay.textContent = `🎉 Новый рекорд: ${userRecord}!`;
+            } else {
+                elements.recordDisplay.classList.remove('new-record');
             }
         }
 
@@ -253,6 +266,7 @@
         function setupEventListeners() {
             elements.clickBtn.addEventListener('click', handleClick);
             elements.finishBtn.addEventListener('click', finishGame);
+            elements.restartBtn.addEventListener('click', restartGame);
             elements.resetBtn.addEventListener('click', showResetConfirm);
             elements.confirmYes.addEventListener('click', resetRecord);
             elements.confirmNo.addEventListener('click', hideResetConfirm);
@@ -269,7 +283,9 @@
             elements.timer.textContent = 'Время: 10 сек';
             elements.result.style.display = 'none';
             elements.finishBtn.style.display = 'none';
+            elements.restartBtn.style.display = 'none';
             elements.clickBtn.disabled = false;
+            elements.resetBtn.disabled = true; // Блокируем сброс во время игры
             
             clearInterval(timerId);
             timerId = setInterval(updateTimer, 1000);
@@ -298,6 +314,7 @@
             clearInterval(timerId);
             gameActive = false;
             elements.clickBtn.disabled = true;
+            elements.resetBtn.disabled = false; // Разблокируем сброс после игры
             
             isNewRecord = clicks > userRecord;
             if (isNewRecord) {
@@ -310,34 +327,43 @@
         // Показать результаты
         function showResult() {
             elements.result.style.display = 'block';
-            elements.finishBtn.style.display = 'block';
+            elements.restartBtn.style.display = 'block';
             
-            elements.result.innerHTML = `
-                <p>🎯 Ваш результат: <b>${clicks}</b> кликов!</p>
-                ${isNewRecord 
-                    ? '<p style="color: #2ecc71;">🎉 Вы побили рекорд!</p>' 
-                    : `<p>🏅 Текущий рекорд: ${userRecord}</p>`}
-            `;
+            if (isNewRecord) {
+                elements.finishBtn.style.display = 'block';
+                elements.result.innerHTML = `
+                    <p>🎯 Ваш результат: <b>${clicks}</b> кликов!</p>
+                    <p style="color: #2ecc71;">🎉 Вы побили рекорд!</p>
+                `;
+            } else {
+                elements.finishBtn.style.display = 'none';
+                elements.result.innerHTML = `
+                    <p>🎯 Ваш результат: <b>${clicks}</b> кликов</p>
+                    <p>🏅 Текущий рекорд: ${userRecord}</p>
+                `;
+            }
             
             updateRecordDisplay();
         }
 
-        // Завершение и отправка результатов
+        // Завершение игры (отправка результатов только при новом рекорде)
         function finishGame() {
-            if (tg) {
+            if (tg && isNewRecord) {
                 const resultData = {
                     action: 'save_result',
                     user_id: userId,
                     clicks: clicks,
-                    is_new_record: isNewRecord,
+                    is_new_record: true,
                     user_name: userName
                 };
-                
                 tg.sendData(JSON.stringify(resultData));
-                setTimeout(() => tg.close(), 300);
-            } else {
-                alert(`${userName}, ваш результат: ${clicks} кликов!`);
             }
+            setTimeout(() => tg.close(), 300);
+        }
+
+        // Перезапуск игры
+        function restartGame() {
+            startGame();
         }
 
         // Показать диалог подтверждения сброса

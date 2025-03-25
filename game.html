@@ -95,6 +95,14 @@
             display: none;
         }
         
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
         .finish-btn {
             background-color: #2ecc71;
             color: white;
@@ -103,8 +111,7 @@
             padding: 12px 25px;
             font-size: 16px;
             cursor: pointer;
-            margin-top: 15px;
-            display: none;
+            width: 200px;
         }
         
         .restart-btn {
@@ -115,8 +122,7 @@
             padding: 12px 25px;
             font-size: 16px;
             cursor: pointer;
-            margin-top: 15px;
-            display: none;
+            width: 200px;
         }
         
         .reset-btn {
@@ -127,7 +133,7 @@
             padding: 10px 20px;
             font-size: 14px;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 15px;
         }
         
         .reset-btn:disabled {
@@ -185,8 +191,12 @@
         <p class="counter" id="counter">Кликов: 0</p>
         <button class="click-btn" id="click-btn">КЛИКНУТЬ!</button>
         <div class="result" id="result"></div>
-        <button class="finish-btn" id="finish-btn">ЗАВЕРШИТЬ</button>
-        <button class="restart-btn" id="restart-btn">ИГРАТЬ СНОВА</button>
+        
+        <div class="action-buttons">
+            <button class="finish-btn" id="finish-btn">ЗАВЕРШИТЬ</button>
+            <button class="restart-btn" id="restart-btn">ИГРАТЬ СНОВА</button>
+        </div>
+        
         <button class="reset-btn" id="reset-btn">СБРОСИТЬ РЕКОРД</button>
     </div>
 
@@ -285,7 +295,7 @@
             elements.finishBtn.style.display = 'none';
             elements.restartBtn.style.display = 'none';
             elements.clickBtn.disabled = false;
-            elements.resetBtn.disabled = true; // Блокируем сброс во время игры
+            elements.resetBtn.disabled = true;
             
             clearInterval(timerId);
             timerId = setInterval(updateTimer, 1000);
@@ -314,7 +324,7 @@
             clearInterval(timerId);
             gameActive = false;
             elements.clickBtn.disabled = true;
-            elements.resetBtn.disabled = false; // Разблокируем сброс после игры
+            elements.resetBtn.disabled = false;
             
             isNewRecord = clicks > userRecord;
             if (isNewRecord) {
@@ -327,16 +337,15 @@
         // Показать результаты
         function showResult() {
             elements.result.style.display = 'block';
+            elements.finishBtn.style.display = 'block';
             elements.restartBtn.style.display = 'block';
             
             if (isNewRecord) {
-                elements.finishBtn.style.display = 'block';
                 elements.result.innerHTML = `
                     <p>🎯 Ваш результат: <b>${clicks}</b> кликов!</p>
                     <p style="color: #2ecc71;">🎉 Вы побили рекорд!</p>
                 `;
             } else {
-                elements.finishBtn.style.display = 'none';
                 elements.result.innerHTML = `
                     <p>🎯 Ваш результат: <b>${clicks}</b> кликов</p>
                     <p>🏅 Текущий рекорд: ${userRecord}</p>
@@ -346,14 +355,14 @@
             updateRecordDisplay();
         }
 
-        // Завершение игры (отправка результатов только при новом рекорде)
+        // Завершение игры
         function finishGame() {
-            if (tg && isNewRecord) {
+            if (tg) {
                 const resultData = {
                     action: 'save_result',
                     user_id: userId,
                     clicks: clicks,
-                    is_new_record: true,
+                    is_new_record: isNewRecord,
                     user_name: userName
                 };
                 tg.sendData(JSON.stringify(resultData));
